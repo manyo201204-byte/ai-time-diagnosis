@@ -712,25 +712,65 @@
 
   var BIZ_QUESTIONS = {
     weekly: [
-      { key: "members", label: "部下の人数は？", options: ["1〜3人", "4〜7人", "8人以上"] },
-      { key: "hours",   label: "週あたりの所要時間は？", options: ["1時間未満", "1〜3時間", "3時間以上"] },
-      { key: "format",  label: "部下の週報フォーマットは？", options: ["統一されている", "バラバラ"] }
+      { key: "hours", label: "週あたりの所要時間は？", options: ["1時間未満", "1〜3時間", "3時間以上"] },
+      {
+        key: "trust",
+        label: "部下の報告に書かれた「順調」「問題なし」を、そのまま受け取れますか？",
+        options: [
+          { label: "そのままは受け取れない", weight: 0.8 },
+          { label: "人によっては注意して読む", weight: 0.9 },
+          { label: "だいたいそのまま受け取れる", weight: 1.0 }
+        ]
+      },
+      {
+        key: "confirm",
+        label: "まとめた後、内容を部下に確認してから上に出すことはありますか？",
+        options: [
+          { label: "よくある", weight: 0.8 },
+          { label: "たまにある", weight: 0.9 },
+          { label: "ほとんどない", weight: 1.0 }
+        ]
+      }
     ],
     meeting: [
-      { key: "hours",  label: "週あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
-      { key: "format", label: "資料の定型度は？", options: ["毎回ほぼ同じ型", "都度内容が変わる"] }
+      { key: "hours", label: "週あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
+      {
+        key: "collect",
+        label: "資料を作る前に、各所から数字や進捗を集める手間はどれくらいですか？",
+        options: [
+          { label: "あちこち探し回る", weight: 0.8 },
+          { label: "だいたい決まった場所にある", weight: 0.9 },
+          { label: "ほぼ揃っている", weight: 1.0 }
+        ]
+      }
     ],
     review: [
-      { key: "hours",  label: "半期あたりの所要時間は？", options: ["3時間未満", "3〜6時間", "6時間以上"] },
-      { key: "format", label: "書く内容の定型度は？", options: ["毎回同じような書き方でよい", "部下ごとに大きく変える必要がある"] }
+      { key: "hours", label: "半期あたりの所要時間は？", options: ["3時間未満", "3〜6時間", "6時間以上"] },
+      {
+        key: "materials",
+        label: "半期分の材料（週報・1on1メモなど）は残っていますか？",
+        options: [
+          { label: "ほぼ残っていない", weight: 0.8 },
+          { label: "一部しかない", weight: 0.9 },
+          { label: "探せば出てくる", weight: 1.0 }
+        ]
+      }
     ],
     ringi: [
       { key: "hours",     label: "1回あたりの所要時間は？", options: ["30分未満", "30分〜1時間", "1時間以上"] },
       { key: "frequency", label: "月にどれくらい発生しますか？", options: ["月1件程度", "月2〜4件", "月5件以上"] }
     ],
     numbers: [
-      { key: "hours",  label: "月あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
-      { key: "format", label: "定型度は？", options: ["毎回同じフォーマット", "都度変わる"] }
+      { key: "hours", label: "月あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
+      {
+        key: "fieldReliance",
+        label: "数字の変動理由は、現場に聞かないと分からないことが多いですか？",
+        options: [
+          { label: "ほぼ毎回", weight: 0.8 },
+          { label: "半々", weight: 0.9 },
+          { label: "だいたい自分で分かる", weight: 1.0 }
+        ]
+      }
     ]
   };
 
@@ -745,7 +785,7 @@
       hoursMap: { "1時間未満": 0.5, "1〜3時間": 2, "3時間以上": 4 },
       steps: [
         {
-          text: function (s) { return "部下" + (s.biz.weekly.members || "") + "分の報告を読む"; },
+          text: "部下から届いた報告を読む",
           weight: 20, delegable: true,
           reason: "読む・整理するだけの作業で、判断は伴わない"
         },
@@ -757,13 +797,7 @@
         {
           text: "個人ごとの「基準の揺らぎ」を補正する",
           weight: 25, delegable: false,
-          reason: function (s) {
-            var base = "8人が同じ「順調です」と書いても、控えめに書く人と盛る人がいる。Aさんの順調とBさんの順調は違う。この補正には各部下の過去の書きぶりとの比較が必要だが、その比較対象は渡したテキストの中に存在しない。";
-            if (s.biz.weekly.format === "バラバラ") {
-              base += "特にフォーマットがバラバラだと、この差はさらに見えにくくなります。";
-            }
-            return base;
-          }
+          reason: "部下が同じ「順調です」と書いても、控えめに書く人と盛る人がいる。Aさんの順調とBさんの順調は違う。この補正には各部下の過去の書きぶりとの比較が必要だが、その比較対象は渡したテキストの中に存在しない。"
         },
         {
           text: "引っかかる箇所を見つけ、本人に確認する",
@@ -777,9 +811,8 @@
           reason: "材料が整理されていれば、体裁を整える作業は定型的にできる"
         }
       ],
-      prompt: function (s) {
-        var n = s.biz.weekly.members || "部下";
-        return "以下は" + n + "の部下から届いた今週の週報です。\n" +
+      prompt: function () {
+        return "以下は部下から届いた今週の週報です。\n" +
           "これをもとに、私が上司に報告するための「チーム進捗サマリーの下書き」を作ってください。\n\n" +
           "【あなたにお願いしたいこと】\n" +
           "1. 各メンバーの報告を「進捗」「課題・困りごと」「来週の予定」の3項目に整理し直してください\n" +
@@ -794,7 +827,7 @@
           "・メンバー名ごとに箇条書き\n" +
           "・全体まとめは最後に3行以内で\n\n" +
           "【今週の週報】\n" +
-          "（ここに" + n + "分の週報を貼り付けてください）";
+          "（ここに部下の週報を貼り付けてください）";
       }
     },
 
@@ -1032,27 +1065,101 @@
     return raw; // weekly / meeting are already weekly figures
   }
 
+  // Questions whose answer only feeds the hoursMap / frequency lookup, not a multiplier
+  var STRUCTURAL_BIZ_QUESTION_KEYS = { hours: true, frequency: true };
+
+  function getBizQuestionWeight(bizId, key, value) {
+    var q = BIZ_QUESTIONS[bizId].filter(function (qq) { return qq.key === key; })[0];
+    if (!q) return 1;
+    var opt = q.options.filter(function (o) {
+      return (typeof o === "string" ? o : o.label) === value;
+    })[0];
+    if (!opt) return 1;
+    return typeof opt === "string" ? 1 : (opt.weight != null ? opt.weight : 1);
+  }
+
+  // Product of every non-structural (i.e. weighted) business-specific answer's weight
+  function bizQuestionsWeightProduct(bizId, s) {
+    var product = 1;
+    BIZ_QUESTIONS[bizId].forEach(function (q) {
+      if (STRUCTURAL_BIZ_QUESTION_KEYS[q.key]) return;
+      product *= getBizQuestionWeight(bizId, q.key, s.biz[bizId][q.key]);
+    });
+    return product;
+  }
+
   function weeklyReduction(bizId, s) {
     var data = BUSINESS_DATA[bizId];
     var base = weeklyEquivalentHours(bizId, s);
     var materialW = getCommonWeight("materials", s.common.materials);
     var editW = getCommonWeight("editAmount", s.common.editAmount);
     var expW = getCommonWeight("experience", s.common.experience);
-    return base * data.commitRatio * materialW * editW * expW;
+    var bizW = bizQuestionsWeightProduct(bizId, s);
+    return base * data.commitRatio * materialW * editW * expW * bizW;
   }
 
   var OCCURRENCE_NOUN = { review: "回", numbers: "回", ringi: "件" };
 
-  // All headline duration displays share this: "◯時間◯分" / "◯分", rounded to
-  // the nearest 5 minutes (finer precision reads as falsely exact), never showing 0.
-  function formatDurationHM(hours) {
-    var totalMin = Math.round((hours * 60) / 5) * 5;
-    if (totalMin <= 0) totalMin = 5;
+  // Rounds to the nearest 5 minutes (finer precision reads as falsely exact),
+  // never rounding a genuinely positive value down to 0.
+  function roundToNearestFiveMinutes(hours) {
+    var m = Math.round((hours * 60) / 5) * 5;
+    if (hours > 0 && m <= 0) m = 5;
+    return m;
+  }
+
+  // Renders an already-rounded whole minute count as "◯時間◯分" / "◯分".
+  function minutesToHM(totalMin) {
     var h = Math.floor(totalMin / 60);
     var m = totalMin % 60;
     if (h === 0) return m + "分";
     if (m === 0) return h + "時間";
     return h + "時間" + m + "分";
+  }
+
+  // All headline duration displays share this: "◯時間◯分" / "◯分", rounded to
+  // the nearest 5 minutes (finer precision reads as falsely exact), never showing 0.
+  function formatDurationHM(hours) {
+    return minutesToHM(roundToNearestFiveMinutes(hours));
+  }
+
+  // Ensures the per-business breakdown always sums exactly to the displayed
+  // total: round the true total once, then apportion it across the chosen
+  // businesses in proportion to their true (unrounded) reductions, resolving
+  // any leftover rounding remainder onto the business with the largest
+  // reduction rather than letting each business round independently.
+  function allocateWeeklyMinutes(chosen, reductions) {
+    var totalRaw = chosen.reduce(function (sum, id) { return sum + reductions[id]; }, 0);
+    var totalMin = roundToNearestFiveMinutes(totalRaw);
+    var minutes = {};
+
+    if (chosen.length === 0 || totalRaw <= 0) {
+      chosen.forEach(function (id) { minutes[id] = 0; });
+      return { totalMin: totalMin, minutes: minutes };
+    }
+
+    var sumRounded = 0;
+    chosen.forEach(function (id) {
+      var share = (reductions[id] / totalRaw) * totalMin;
+      var rounded = Math.round(share / 5) * 5;
+      minutes[id] = rounded;
+      sumRounded += rounded;
+    });
+
+    // Route any rounding leftover onto the single largest-reduction business,
+    // so the breakdown always sums to exactly totalMin. When totalMin itself
+    // is only a handful of minutes and several businesses are selected, this
+    // can leave a smaller business at 0 for that business alone — an exact
+    // sum is kept as the higher priority over never showing 0 in that
+    // unavoidable edge case.
+    var diff = totalMin - sumRounded;
+    if (diff !== 0) {
+      var maxId = chosen.slice().sort(function (a, b) { return reductions[b] - reductions[a]; })[0];
+      minutes[maxId] += diff;
+      if (minutes[maxId] < 0) minutes[maxId] = 0;
+    }
+
+    return { totalMin: totalMin, minutes: minutes };
   }
 
   // Consequence-oriented phrasing for each below-1.0 answer, used in the calc breakdown
@@ -1076,6 +1183,38 @@
     if (tenths <= 0) return null;
     return "約" + tenths + "割ぶん差し引き";
   }
+
+  // Same idea as DISCOUNT_REASON_TEXT, but for each business's own weighted question
+  var BIZ_DISCOUNT_REASON_TEXT = {
+    weekly: {
+      trust: {
+        "そのままは受け取れない": "部下の報告をそのままは受け取れないため",
+        "人によっては注意して読む": "部下によっては報告を注意して読む必要があるため"
+      },
+      confirm: {
+        "よくある": "まとめた後に部下へ確認する工程が発生しているため",
+        "たまにある": "まとめた後に部下へ確認することがあるため"
+      }
+    },
+    meeting: {
+      collect: {
+        "あちこち探し回る": "資料を作る前にあちこち探し回る必要があるため",
+        "だいたい決まった場所にある": "資料の材料の在り処を確認する手間がかかるため"
+      }
+    },
+    review: {
+      materials: {
+        "ほぼ残っていない": "半期分の週報・1on1メモがほぼ残っていないため",
+        "一部しかない": "半期分の週報・1on1メモが一部しか残っていないため"
+      }
+    },
+    numbers: {
+      fieldReliance: {
+        "ほぼ毎回": "数字の変動理由を現場に聞かないと分からないことが多いため",
+        "半々": "数字の変動理由を現場に確認することがあるため"
+      }
+    }
+  };
 
   function copyToClipboard(text, cb) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1106,11 +1245,11 @@
     businesses: [],
     common: { experience: null, materials: null, editAmount: null },
     biz: {
-      weekly:  { members: null, hours: null, format: null },
-      meeting: { hours: null, format: null },
-      review:  { hours: null, format: null },
+      weekly:  { hours: null, trust: null, confirm: null },
+      meeting: { hours: null, collect: null },
+      review:  { hours: null, materials: null },
       ringi:   { hours: null, frequency: null },
-      numbers: { hours: null, format: null }
+      numbers: { hours: null, fieldReliance: null }
     }
   };
 
@@ -1377,7 +1516,7 @@
     return section;
   }
 
-  function renderCalcSection(topId) {
+  function renderCalcSection(topId, allocatedMinutes) {
     var data = BUSINESS_DATA[topId];
     var s = state;
     var selectedHoursLabel = s.biz[topId].hours;
@@ -1426,7 +1565,17 @@
       }
     });
 
-    var finalValue = weeklyReduction(topId, s);
+    BIZ_QUESTIONS[topId].forEach(function (q) {
+      if (STRUCTURAL_BIZ_QUESTION_KEYS[q.key]) return;
+      var val = s.biz[topId][q.key];
+      var w = getBizQuestionWeight(topId, q.key, val);
+      var portion = discountPortionLabel(w);
+      if (portion) {
+        var lookup = BIZ_DISCOUNT_REASON_TEXT[topId] && BIZ_DISCOUNT_REASON_TEXT[topId][q.key];
+        var text = (lookup && lookup[val]) || val;
+        reasons.push({ text: text, portion: portion });
+      }
+    });
 
     var section = el("div", { class: "result-section calc-card" });
     section.appendChild(el("div", { class: "section-num", text: "根拠" }));
@@ -1472,7 +1621,7 @@
       class: "calc-label",
       text: "この業務（" + BIZ_TAG_LABELS[topId] + "）の削減見込み"
     }));
-    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + formatDurationHM(finalValue) }));
+    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + minutesToHM(allocatedMinutes) }));
     section.appendChild(finalRow);
 
     section.appendChild(el("p", {
@@ -1483,7 +1632,7 @@
     return section;
   }
 
-  function renderTotalSection(total, topId, chosenCount) {
+  function renderTotalSection(total, allocation, topId, chosenCount) {
     var section = el("div", { class: "result-section transition-block" });
     section.appendChild(el("div", {
       class: "transition-heading",
@@ -1492,7 +1641,7 @@
     section.appendChild(el("h2", { text: "週あたりの合計削減時間" }));
 
     var big = el("div", { class: "big-number" });
-    big.appendChild(document.createTextNode(formatDurationHM(total)));
+    big.appendChild(document.createTextNode(minutesToHM(allocation.totalMin)));
     big.appendChild(el("span", { class: "unit", text: " / 週" }));
     section.appendChild(big);
     section.appendChild(el("p", {
@@ -1503,17 +1652,18 @@
     var isSporadic = topId === "review" || topId === "numbers" || topId === "ringi";
 
     if (isSporadic) {
+      var bizWeeklyMinutes = allocation.minutes[topId];
+      var bizWeeklyHours = bizWeeklyMinutes / 60;
       var perOcc;
-      if (topId === "review") perOcc = weeklyReduction(topId, state) * 26;
-      else if (topId === "numbers") perOcc = weeklyReduction(topId, state) * 4.3;
-      else perOcc = (weeklyReduction(topId, state) * 4.3) / getRingiMonthlyCount(state);
+      if (topId === "review") perOcc = bizWeeklyHours * 26;
+      else if (topId === "numbers") perOcc = bizWeeklyHours * 4.3;
+      else perOcc = (bizWeeklyHours * 4.3) / getRingiMonthlyCount(state);
 
       var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
       var occNoun = OCCURRENCE_NOUN[topId];
-      var bizWeekly = weeklyReduction(topId, state);
       section.appendChild(el("p", {
         class: "translated-line",
-        text: bizLabel + "は1" + occNoun + "あたり 約" + formatDurationHM(perOcc) + "の削減見込み ／ 週あたりに直すと約" + formatDurationHM(bizWeekly) + "（毎週の業務ではないため、週で割ると数字が小さく見えます）。"
+        text: bizLabel + "は1" + occNoun + "あたり 約" + formatDurationHM(perOcc) + "の削減見込み ／ 週あたりに直すと約" + minutesToHM(bizWeeklyMinutes) + "（毎週の業務ではないため、週で割ると数字が小さく見えます）。"
       }));
     }
 
@@ -1532,7 +1682,7 @@
     return section;
   }
 
-  function renderBreakdownSection(chosen, reductions) {
+  function renderBreakdownSection(chosen, reductions, allocatedMinutes) {
     var section = el("div", { class: "result-section" });
     section.appendChild(el("div", { class: "section-num", text: "内訳" }));
     section.appendChild(el("h2", { text: "選んだ業務ごとの内訳" }));
@@ -1546,7 +1696,7 @@
       var row = el("div", { class: "bar-row" });
       var labelRow = el("div", { class: "bar-label" });
       labelRow.appendChild(el("span", { text: label }));
-      labelRow.appendChild(el("span", { text: formatDurationHM(val) + "/週" }));
+      labelRow.appendChild(el("span", { text: minutesToHM(allocatedMinutes[id]) + "/週" }));
       row.appendChild(labelRow);
 
       var track = el("div", { class: "bar-track" });
@@ -1560,7 +1710,7 @@
     return section;
   }
 
-  function renderPrioritySection(order, reductions) {
+  function renderPrioritySection(order, allocatedMinutes) {
     var section = el("div", { class: "result-section" });
     section.appendChild(el("div", { class: "section-num", text: "優先順位" }));
     section.appendChild(el("h2", { text: "手をつける優先順位" }));
@@ -1575,7 +1725,7 @@
       body.appendChild(el("div", { class: "priority-title", text: label }));
       body.appendChild(el("div", {
         class: "priority-meta",
-        text: formatDurationHM(reductions[id]) + "/週の削減見込み ・ " + EASE_COMMENTS[id]
+        text: minutesToHM(allocatedMinutes[id]) + "/週の削減見込み ・ " + EASE_COMMENTS[id]
       }));
       li.appendChild(body);
       list.appendChild(li);
@@ -1632,12 +1782,14 @@
     var showStep2 = topId === "weekly" &&
       (state.common.materials === "複数の場所に散らばっている" || state.common.materials === "どこにあるか探すところから");
 
+    var allocation = allocateWeeklyMinutes(chosen, reductions);
+
     root.appendChild(renderPromptSection(topId, showStep2));
     root.appendChild(renderProcessSection(topId));
-    root.appendChild(renderCalcSection(topId));
-    root.appendChild(renderTotalSection(totalReduction, topId, chosen.length));
-    root.appendChild(renderBreakdownSection(chosen, reductions));
-    root.appendChild(renderPrioritySection(priorityOrder, reductions));
+    root.appendChild(renderCalcSection(topId, allocation.minutes[topId]));
+    root.appendChild(renderTotalSection(totalReduction, allocation, topId, chosen.length));
+    root.appendChild(renderBreakdownSection(chosen, reductions, allocation.minutes));
+    root.appendChild(renderPrioritySection(priorityOrder, allocation.minutes));
 
     if (showStep2) {
       root.appendChild(renderStep2Section());
