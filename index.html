@@ -384,6 +384,25 @@
     margin: 0 0 14px;
   }
 
+  .prompt-pair {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 16px;
+  }
+
+  .prompt-substep-label {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+  }
+
+  .prompt-connector {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    text-align: center;
+    margin: 14px 0;
+  }
+
   .prompt-textarea {
     width: 100%;
     min-height: 260px;
@@ -414,12 +433,38 @@
 
   .process-table-wrap {
     overflow-x: auto;
+    background: var(--color-surface);
+    border-radius: 10px;
+    padding: 4px 4px 0;
   }
 
   table.process-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+  }
+
+  .step1-subheading {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-text);
+    margin: 22px 0 10px;
+  }
+
+  .step1-subheading:first-of-type {
+    margin-top: 4px;
+  }
+
+  .step1-bridge {
+    margin: 4px 0 26px;
+  }
+
+  .bridge-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--color-text);
   }
 
   .process-table th {
@@ -786,12 +831,12 @@
       steps: [
         {
           text: "部下から届いた報告を読む",
-          weight: 20, delegable: true,
+          weight: 15, delegable: true,
           reason: "読む・整理するだけの作業で、判断は伴わない"
         },
         {
           text: "各人から要点を抜き出す",
-          weight: 20, delegable: true,
+          weight: 15, delegable: true,
           reason: "書かれている内容から要点を拾うだけの整形作業"
         },
         {
@@ -802,18 +847,30 @@
         {
           text: "引っかかる箇所を見つけ、本人に確認する",
           weight: 20, delegable: false,
-          reason: "AIは「分からない」と言わない。記述が薄い箇所や前週と辻褄が合わない箇所があっても、それらしくつなげた原稿を返してくる。穴の存在自体が見えなくなる。",
+          reason: "AIは「分からない」と言わない。記述が薄い箇所や前週と辻褄が合わない箇所があっても、それらしくつなげた原稿を返してくる。穴の存在自体が見えなくなる。確認して得た情報は、次の工程でAIに戻して反映させる。",
           caveat: "「どこが引っかかるか」の洗い出しはAIに任せられる。確認そのものが人間に残る。"
         },
         {
           text: "並べ替えて上長向けの文章にする",
           weight: 15, delegable: true,
           reason: "材料が整理されていれば、体裁を整える作業は定型的にできる"
+        },
+        {
+          text: "確認して分かったことをAIに戻し、下書きを修正させる",
+          weight: 10, delegable: true,
+          reason: "人間がやるのは情報を取ってくることと、それをAIに渡すこと。取ってきた情報を文章に反映する作業自体はAIができる。"
         }
       ],
-      prompt: function () {
+      twoStep: true,
+      bridgeLines: [
+        "AIに渡せる工程（読む・要点を抜く・文章化する）→ STEP 1-Aで一度に任せる",
+        "自分でやる工程（揺らぎの補正・引っかかる箇所の確認）→ 出てきた下書きを見ながら行う",
+        "確認して分かったこと → STEP 1-Bで戻して反映させる"
+      ],
+      promptA: function () {
         return "以下は部下から届いた今週の週報です。\n" +
-          "これをもとに、私が上司に報告するための「チーム進捗サマリーの下書き」を作ってください。\n\n" +
+          "これをもとに、私が上司に報告するための「チーム進捗サマリーの下書き」と、\n" +
+          "「私が部下に確認すべきことのリスト」の2つを作ってください。\n\n" +
           "【あなたにお願いしたいこと】\n" +
           "1. 各メンバーの報告を「進捗」「課題・困りごと」「来週の予定」の3項目に整理し直してください\n" +
           "   （書き方のフォーマットがバラバラなので、表記だけ揃えてください）\n" +
@@ -821,13 +878,26 @@
           "   まとめの一文で示してください\n" +
           "3. 事実の要約にとどめてください。重要度の判断や優先順位づけ、\n" +
           "   上司への報告トーンの調整は私が行うので、AIの解釈や評価は加えないでください\n" +
-          "4. 内容が曖昧だったり、事実か意見か判断がつかない記述は「※要確認」として残してください。\n" +
-          "   行間を読んで断定しないでください\n\n" +
+          "4. 内容が曖昧だったり、事実か意見か判断がつかない記述、前週と辻褄が合わない記述があれば、\n" +
+          "   下書き本文には含めず、「確認すべきことリスト」としてまとめて別出ししてください\n\n" +
           "【出力形式】\n" +
+          "■チーム進捗サマリー（下書き）\n" +
           "・メンバー名ごとに箇条書き\n" +
           "・全体まとめは最後に3行以内で\n\n" +
+          "■確認すべきことリスト\n" +
+          "・誰に何を確認すべきかを箇条書きで\n\n" +
           "【今週の週報】\n" +
           "（ここに部下の週報を貼り付けてください）";
+      },
+      promptB: function () {
+        return "先ほどの下書きについて、確認できたことを共有します。\n" +
+          "以下を踏まえて修正してください。\n\n" +
+          "【確認結果】\n" +
+          "（ここに、部下に確認して分かったことを書いてください）\n\n" +
+          "【お願いしたいこと】\n" +
+          "1. 確認結果を該当箇所に反映してください\n" +
+          "2. 反映によって前後の記述と矛盾が生じる場合は指摘してください\n" +
+          "3. 確認結果に含まれない箇所は変更しないでください";
       }
     },
 
@@ -844,7 +914,7 @@
         {
           text: "今週の進捗・数字を各メンバー・各システムから集める",
           weight: 25, delegable: false,
-          reason: "データの所在が各メンバーや別システムに散らばっており、AIに渡せるテキストの形になっていない",
+          reason: "データの所在が各メンバーや別システムに散らばっており、AIに渡せるテキストの形になっていない。集めた情報は次の工程でAIに渡して資料化する。",
           caveat: "「何を・誰に確認すべきか」のリスト化はAIに任せられる。実際に取りに行く行為は人間が行う。"
         },
         {
@@ -888,7 +958,7 @@
         {
           text: "半期分の週報・1on1メモを探し出し、集める",
           weight: 20, delegable: false,
-          reason: "メモがSlack・メール・手書きノートなど複数の場所に分散しており、どこに何が残っているかを把握しているのは本人だけだから",
+          reason: "メモがSlack・メール・手書きノートなど複数の場所に分散しており、どこに何が残っているかを把握しているのは本人だけだから。集めたメモは次の工程でAIに渡して整理させる。",
           caveat: "「何月分のどんな記録が必要か」というチェックリストの作成はAIに任せられる。実際に探して集める行為は人間が行う。"
         },
         {
@@ -935,7 +1005,7 @@
         {
           text: "申請の目的・背景を箇条書きメモにする",
           weight: 20, delegable: false,
-          reason: "「なぜ必要か」の判断根拠は申請者本人の頭の中にしかなく、テキスト化される前の情報",
+          reason: "「なぜ必要か」の判断根拠は申請者本人の頭の中にしかなく、テキスト化される前の情報。書いたメモは次の工程でAIに渡して文章化する。",
           caveat: "「稟議で聞かれやすい質問リスト」を提示させ、書き漏れがないか確認させることはAIに任せられる。目的・背景そのものを考えるのは人間が行う。"
         },
         {
@@ -976,7 +1046,7 @@
         {
           text: "数字の変動要因を洗い出す（現場実態の把握）",
           weight: 20, delegable: false,
-          reason: "数字の背景にある実態は、数字そのものやテキストの中には存在しない、現場から直接得る情報",
+          reason: "数字の背景にある実態は、数字そのものやテキストの中には存在しない、現場から直接得る情報。把握した要因は次の工程でAIに渡して説明文にする。",
           caveat: "前月との差分から「どの科目に変動があるか」をリスト化し、確認すべき項目を絞り込むことはAIに任せられる。実際に理由を確認するのは人間が行う。"
         },
         {
@@ -1463,34 +1533,8 @@
     return wrap;
   }
 
-  function renderPromptSection(topId, showStep2) {
+  function renderProcessTable(topId) {
     var data = BUSINESS_DATA[topId];
-    var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
-
-    var section = el("div", { class: "result-section prompt-card" });
-    section.appendChild(el("div", { class: "step-label", text: showStep2 ? "STEP 1 / 2" : "STEP 1" }));
-    section.appendChild(el("h2", { text: "まずこれ1本、月曜の朝に試してください" }));
-    if (showStep2) {
-      section.appendChild(el("p", {
-        class: "prompt-sub",
-        text: "まず今週やることを示します。この後、来月に向けた一手も出てきます。"
-      }));
-    }
-    section.appendChild(el("p", {
-      class: "prompt-sub",
-      text: "最優先の業務は「" + bizLabel + "」です。以下をコピーして、手元のAI（Copilot、ChatGPTなど）に貼り付けてください。"
-    }));
-    section.appendChild(renderPromptBlock(data.prompt(state), "プロンプトをコピー"));
-    return section;
-  }
-
-  function renderProcessSection(topId) {
-    var data = BUSINESS_DATA[topId];
-    var section = el("div", { class: "result-section" });
-    section.appendChild(el("div", { class: "section-num", text: "STEP 1 の根拠" }));
-    section.appendChild(el("h2", { text: "工程分解：どこまでAIに渡せるか" }));
-    section.appendChild(el("p", { class: "sub", text: "色のついた行が、あなた自身で行うべき工程です。" }));
-
     var wrap = el("div", { class: "process-table-wrap" });
     var table = el("table", { class: "process-table" });
 
@@ -1529,7 +1573,69 @@
     });
     table.appendChild(tbody);
     wrap.appendChild(table);
-    section.appendChild(wrap);
+    return wrap;
+  }
+
+  function renderStep1Section(topId, showStep2) {
+    var data = BUSINESS_DATA[topId];
+    var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
+
+    var section = el("div", { class: "result-section prompt-card" });
+    section.appendChild(el("div", { class: "step-label", text: showStep2 ? "STEP 1 / 2" : "STEP 1" }));
+    section.appendChild(el("h2", { text: "この業務、どこまでAIに任せられるか" }));
+    if (showStep2) {
+      section.appendChild(el("p", {
+        class: "prompt-sub",
+        text: "まず今週やることを示します。この後、来月に向けた一手も出てきます。"
+      }));
+    }
+    section.appendChild(el("p", {
+      class: "prompt-sub",
+      text: "最優先の業務は「" + bizLabel + "」です。"
+    }));
+
+    // 1. process table
+    section.appendChild(el("div", { class: "step1-subheading", text: "まず、この業務を工程に分けます" }));
+    section.appendChild(el("p", { class: "sub", text: "色のついた行が、あなた自身で行うべき工程です。" }));
+    section.appendChild(renderProcessTable(topId));
+
+    // 2. bridge: why the prompt is split the way it is (two-step businesses only)
+    if (data.twoStep && data.bridgeLines) {
+      var bridge = el("div", { class: "step1-bridge" });
+      bridge.appendChild(el("div", { class: "step1-subheading", text: "だから、こういう手順になります" }));
+      var ul = el("ul", { class: "bridge-list" });
+      data.bridgeLines.forEach(function (line) { ul.appendChild(el("li", { text: line })); });
+      bridge.appendChild(ul);
+      section.appendChild(bridge);
+    }
+
+    // 3. the prompt(s) themselves
+    section.appendChild(el("div", { class: "step1-subheading", text: "この通りに、AIに渡してください" }));
+    section.appendChild(el("p", {
+      class: "prompt-sub",
+      text: "以下をコピーして、手元のAI（Copilot、ChatGPTなど）に貼り付けてください。"
+    }));
+
+    if (data.twoStep) {
+      var wrap = el("div", { class: "prompt-pair" });
+
+      var stepA = el("div", { class: "prompt-substep" });
+      stepA.appendChild(el("div", { class: "prompt-substep-label", text: "STEP 1-A｜まず下書きと確認事項を出す" }));
+      stepA.appendChild(renderPromptBlock(data.promptA(state), "STEP 1-Aをコピー"));
+      wrap.appendChild(stepA);
+
+      wrap.appendChild(el("div", { class: "prompt-connector", text: "↓ 部下に確認できたら、続けて同じチャットに送る" }));
+
+      var stepB = el("div", { class: "prompt-substep" });
+      stepB.appendChild(el("div", { class: "prompt-substep-label", text: "STEP 1-B｜確認できたら、これを続けて送る" }));
+      stepB.appendChild(renderPromptBlock(data.promptB(state), "STEP 1-Bをコピー"));
+      wrap.appendChild(stepB);
+
+      section.appendChild(wrap);
+    } else {
+      section.appendChild(renderPromptBlock(data.prompt(state), "プロンプトをコピー"));
+    }
+
     return section;
   }
 
@@ -1810,8 +1916,7 @@
 
     var allocation = allocateWeeklyMinutes(chosen, reductions);
 
-    root.appendChild(renderPromptSection(topId, showStep2));
-    root.appendChild(renderProcessSection(topId));
+    root.appendChild(renderStep1Section(topId, showStep2));
     root.appendChild(renderCalcSection(topId, allocation.minutes[topId]));
     root.appendChild(renderTotalSection(totalReduction, allocation, topId, chosen.length));
     root.appendChild(renderBreakdownSection(chosen, reductions, allocation.minutes));
