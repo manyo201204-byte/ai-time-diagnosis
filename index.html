@@ -1162,6 +1162,23 @@
     return { totalMin: totalMin, minutes: minutes };
   }
 
+  // For sporadic (non-weekly-native) businesses, converts a weekly-equivalent
+  // hours figure back to "per occurrence" hours. Returns null for weekly/meeting,
+  // which have no separate occurrence unit.
+  function perOccurrenceHoursFor(bizId, weeklyHours, s) {
+    if (bizId === "review") return weeklyHours * 26;
+    if (bizId === "numbers") return weeklyHours * 4.3;
+    if (bizId === "ringi") return (weeklyHours * 4.3) / getRingiMonthlyCount(s);
+    return null;
+  }
+
+  // Never shows a bare "0分" for a business with real (if rounding-invisible)
+  // positive time; falls back to "5分未満" so the exact-sum allocation never
+  // reads as "no benefit here".
+  function weeklyMinutesLabel(mins) {
+    return mins > 0 ? minutesToHM(mins) : "5分未満";
+  }
+
   // Consequence-oriented phrasing for each below-1.0 answer, used in the calc breakdown
   var DISCOUNT_REASON_TEXT = {
     materials: {
@@ -1621,7 +1638,7 @@
       class: "calc-label",
       text: "この業務（" + BIZ_TAG_LABELS[topId] + "）の削減見込み"
     }));
-    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + minutesToHM(allocatedMinutes) }));
+    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + weeklyMinutesLabel(allocatedMinutes) }));
     section.appendChild(finalRow);
 
     section.appendChild(el("p", {
@@ -1693,10 +1710,19 @@
       var val = reductions[id];
       var pct = Math.max(4, Math.round((val / max) * 100));
 
+      var mins = allocatedMinutes[id];
+      var valueText = weeklyMinutesLabel(mins) + "/週";
+      if (mins <= 0) {
+        var perOcc = perOccurrenceHoursFor(id, val, state);
+        if (perOcc != null) {
+          valueText += "（1回あたり約" + formatDurationHM(perOcc) + "）";
+        }
+      }
+
       var row = el("div", { class: "bar-row" });
       var labelRow = el("div", { class: "bar-label" });
       labelRow.appendChild(el("span", { text: label }));
-      labelRow.appendChild(el("span", { text: minutesToHM(allocatedMinutes[id]) + "/週" }));
+      labelRow.appendChild(el("span", { text: valueText }));
       row.appendChild(labelRow);
 
       var track = el("div", { class: "bar-track" });
@@ -1725,7 +1751,7 @@
       body.appendChild(el("div", { class: "priority-title", text: label }));
       body.appendChild(el("div", {
         class: "priority-meta",
-        text: minutesToHM(allocatedMinutes[id]) + "/週の削減見込み ・ " + EASE_COMMENTS[id]
+        text: weeklyMinutesLabel(allocatedMinutes[id]) + "/週の削減見込み ・ " + EASE_COMMENTS[id]
       }));
       li.appendChild(body);
       list.appendChild(li);
