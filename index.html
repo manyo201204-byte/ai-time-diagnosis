@@ -358,8 +358,17 @@
     text-transform: uppercase;
   }
 
+  .step-label {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-accent);
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
   .prompt-card {
-    background: var(--color-surface);
+    background: var(--color-accent-tint);
     border: 1.5px solid var(--color-accent);
     border-radius: 14px;
     padding: 22px 20px;
@@ -630,6 +639,7 @@
 
   .step2-card {
     background: var(--color-accent-tint);
+    border: 1.5px solid var(--color-accent);
     border-radius: 14px;
     padding: 22px 20px;
   }
@@ -1031,24 +1041,18 @@
     return base * data.commitRatio * materialW * editW * expW;
   }
 
-  function formatHours(v) {
-    var r = Math.round(v * 10) / 10;
-    if (r < 0.1 && v > 0) r = 0.1;
-    return r.toString();
-  }
-
-  function fmt1(v) { return v.toFixed(1); }
-  function fmt2(v) { return v.toFixed(2); }
-
   var OCCURRENCE_NOUN = { review: "回", numbers: "回", ringi: "件" };
 
-  function formatDuration(hours) {
-    if (hours < 1) {
-      var min = Math.round((hours * 60) / 5) * 5;
-      if (min <= 0) min = 5;
-      return min + "分";
-    }
-    return fmt1(hours) + "時間";
+  // All headline duration displays share this: "◯時間◯分" / "◯分", rounded to
+  // the nearest 5 minutes (finer precision reads as falsely exact), never showing 0.
+  function formatDurationHM(hours) {
+    var totalMin = Math.round((hours * 60) / 5) * 5;
+    if (totalMin <= 0) totalMin = 5;
+    var h = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    if (h === 0) return m + "分";
+    if (m === 0) return h + "時間";
+    return h + "時間" + m + "分";
   }
 
   // Consequence-oriented phrasing for each below-1.0 answer, used in the calc breakdown
@@ -1303,13 +1307,19 @@
     return wrap;
   }
 
-  function renderPromptSection(topId) {
+  function renderPromptSection(topId, showStep2) {
     var data = BUSINESS_DATA[topId];
     var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
 
     var section = el("div", { class: "result-section prompt-card" });
-    section.appendChild(el("div", { class: "section-num", text: "STEP 1" }));
+    section.appendChild(el("div", { class: "step-label", text: showStep2 ? "STEP 1 / 2" : "STEP 1" }));
     section.appendChild(el("h2", { text: "まずこれ1本、月曜の朝に試してください" }));
+    if (showStep2) {
+      section.appendChild(el("p", {
+        class: "prompt-sub",
+        text: "まず今週やることを示します。この後、来月に向けた一手も出てきます。"
+      }));
+    }
     section.appendChild(el("p", {
       class: "prompt-sub",
       text: "最優先の業務は「" + bizLabel + "」です。以下をコピーして、手元のAI（Copilot、ChatGPTなど）に貼り付けてください。"
@@ -1426,13 +1436,13 @@
     row1.appendChild(el("span", { class: "calc-label", text: "現在かけている時間" }));
     row1.appendChild(el("span", {
       class: "calc-value",
-      text: cadenceUnit + selectedHoursLabel + "（あなたの回答）／ " + rawValue + "時間として計算"
+      text: cadenceUnit + selectedHoursLabel + "（あなたの回答）／ " + formatDurationHM(rawValue) + "として計算"
     }));
     section.appendChild(row1);
     if (conversionReason) {
       section.appendChild(el("div", {
         class: "calc-note",
-        text: "※この業務は" + conversionReason + "、以降は週あたりに換算した数字で表示します（週" + fmt2(weeklyBase) + "時間）"
+        text: "※この業務は" + conversionReason + "、以降は週あたりに換算した数字で表示します（週" + formatDurationHM(weeklyBase) + "）"
       }));
     }
 
@@ -1440,7 +1450,7 @@
     row2.appendChild(el("span", { class: "calc-label", text: "うちAIに渡せる工程の比重" }));
     row2.appendChild(el("span", { class: "calc-value", text: delegableWeight + "%（上の表の「渡せる」工程の比重合計）" }));
     section.appendChild(row2);
-    section.appendChild(el("div", { class: "calc-note", text: "→ " + fmt2(afterCommit) + "時間" }));
+    section.appendChild(el("div", { class: "calc-note", text: "→ " + formatDurationHM(afterCommit) }));
 
     if (reasons.length > 0) {
       section.appendChild(el("p", {
@@ -1462,7 +1472,7 @@
       class: "calc-label",
       text: "この業務（" + BIZ_TAG_LABELS[topId] + "）の削減見込み"
     }));
-    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + fmt1(finalValue) + "時間" }));
+    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + formatDurationHM(finalValue) }));
     section.appendChild(finalRow);
 
     section.appendChild(el("p", {
@@ -1474,14 +1484,21 @@
   }
 
   function renderTotalSection(total, topId, chosenCount) {
-    var section = el("div", { class: "result-section" });
-    section.appendChild(el("div", { class: "section-num", text: "全体" }));
+    var section = el("div", { class: "result-section transition-block" });
+    section.appendChild(el("div", {
+      class: "transition-heading",
+      text: "ここからは、選んだ業務すべての合計です"
+    }));
     section.appendChild(el("h2", { text: "週あたりの合計削減時間" }));
 
     var big = el("div", { class: "big-number" });
-    big.appendChild(document.createTextNode(formatHours(total)));
-    big.appendChild(el("span", { class: "unit", text: "時間 / 週" }));
+    big.appendChild(document.createTextNode(formatDurationHM(total)));
+    big.appendChild(el("span", { class: "unit", text: " / 週" }));
     section.appendChild(big);
+    section.appendChild(el("p", {
+      class: "total-scope-note",
+      text: "選んだ" + chosenCount + "業務の合計"
+    }));
 
     var isSporadic = topId === "review" || topId === "numbers" || topId === "ringi";
 
@@ -1493,9 +1510,10 @@
 
       var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
       var occNoun = OCCURRENCE_NOUN[topId];
+      var bizWeekly = weeklyReduction(topId, state);
       section.appendChild(el("p", {
         class: "translated-line",
-        text: "週" + formatHours(total) + "時間 ／ " + bizLabel + "は1" + occNoun + "あたり 約" + formatDuration(perOcc) + "の削減見込みです（毎週の業務ではないため、週で割ると数字が小さく見えます）。"
+        text: bizLabel + "は1" + occNoun + "あたり 約" + formatDurationHM(perOcc) + "の削減見込み ／ 週あたりに直すと約" + formatDurationHM(bizWeekly) + "（毎週の業務ではないため、週で割ると数字が小さく見えます）。"
       }));
     }
 
@@ -1528,7 +1546,7 @@
       var row = el("div", { class: "bar-row" });
       var labelRow = el("div", { class: "bar-label" });
       labelRow.appendChild(el("span", { text: label }));
-      labelRow.appendChild(el("span", { text: formatHours(val) + "時間/週" }));
+      labelRow.appendChild(el("span", { text: formatDurationHM(val) + "/週" }));
       row.appendChild(labelRow);
 
       var track = el("div", { class: "bar-track" });
@@ -1557,7 +1575,7 @@
       body.appendChild(el("div", { class: "priority-title", text: label }));
       body.appendChild(el("div", {
         class: "priority-meta",
-        text: formatHours(reductions[id]) + "時間/週の削減見込み ・ " + EASE_COMMENTS[id]
+        text: formatDurationHM(reductions[id]) + "/週の削減見込み ・ " + EASE_COMMENTS[id]
       }));
       li.appendChild(body);
       list.appendChild(li);
@@ -1568,8 +1586,12 @@
 
   function renderStep2Section() {
     var section = el("div", { class: "result-section step2-card" });
-    section.appendChild(el("div", { class: "section-num", text: "STEP 2" }));
+    section.appendChild(el("div", { class: "step-label", text: "STEP 2 / 2" }));
     section.appendChild(el("h2", { text: "来月、部下に渡せること" }));
+    section.appendChild(el("p", {
+      class: "prompt-sub",
+      text: "STEP 1で「自分では削れない」とした工程は、部下側を変えることで縮められます。"
+    }));
     section.appendChild(el("p", {
       class: "sub",
       text: "これは、部下自身が手元のAI（Copilot、ChatGPTなど）に貼り付けて、自分の週報を書くためのプロンプトです。書き方を指示する文書ではなく、書いた週報をAIに添削させるものでもありません。「こう書きなさい」という指示だと部下の仕事が増えるだけで続きませんが、AIに書かせる道具として渡せば部下自身も楽になるため定着し、結果として提出される週報の粒度が揃い、あなた側の「基準の揺らぎを補正する」工程が縮んでいきます。定着には数週間かかるため、上の削減時間には含めていません。ここは定着後にさらに減る分です。"
@@ -1607,15 +1629,17 @@
     var topId = priorityOrder[0];
     var totalReduction = chosen.reduce(function (sum, id) { return sum + reductions[id]; }, 0);
 
-    root.appendChild(renderPromptSection(topId));
+    var showStep2 = topId === "weekly" &&
+      (state.common.materials === "複数の場所に散らばっている" || state.common.materials === "どこにあるか探すところから");
+
+    root.appendChild(renderPromptSection(topId, showStep2));
     root.appendChild(renderProcessSection(topId));
     root.appendChild(renderCalcSection(topId));
     root.appendChild(renderTotalSection(totalReduction, topId, chosen.length));
     root.appendChild(renderBreakdownSection(chosen, reductions));
     root.appendChild(renderPrioritySection(priorityOrder, reductions));
 
-    if (topId === "weekly" &&
-        (state.common.materials === "複数の場所に散らばっている" || state.common.materials === "どこにあるか探すところから")) {
+    if (showStep2) {
       root.appendChild(renderStep2Section());
     }
 
