@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIに渡せる仕事、渡せない仕事</title>
+<style>
+  :root {
+    --color-bg: #faf9f6;
+    --color-surface: #ffffff;
+    --color-text: #1a2b4a;
+    --color-text-sub: #5b6b85;
+    --color-accent: #2563eb;
+    --color-accent-tint: #eaf1fe;
+    --color-warn: #b91c1c;
+    --color-warn-tint: #fbebe9;
+    --color-border: #dfe3ea;
+    --font-body: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    padding-top: 6px;
+    padding-bottom: 96px;
+  }
+
+  .progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--color-border);
+    z-index: 100;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--color-accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 20px;
+  }
+
+  .step-label {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  h1 {
+    font-size: 26px;
+    line-height: 1.5;
+    margin: 0 0 16px;
+    color: var(--color-text);
+  }
+
+  h2 {
+    font-size: 20px;
+    line-height: 1.6;
+    margin: 0 0 8px;
+    color: var(--color-text);
+  }
+
+  p.lead {
+    font-size: 15px;
+    color: var(--color-text-sub);
+    margin: 0 0 28px;
+  }
+
+  p.sub {
+    font-size: 14px;
+    color: var(--color-text-sub);
+    margin: 0 0 24px;
+  }
+
+  .biz-header {
+    position: sticky;
+    top: 6px;
+    z-index: 50;
+    background: var(--color-bg);
+    padding: 16px 0 14px;
+    margin-bottom: 28px;
+    border-bottom: 1.5px solid var(--color-border);
+  }
+
+  .biz-header .biz-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .biz-header .biz-name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.35;
+  }
+
+  .biz-header .biz-sub {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin-top: 8px;
+  }
+
+  h2.section-title-lg {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.35;
+  }
+
+  .transition-block {
+    border-top: 2px solid var(--color-border);
+    padding-top: 28px;
+    margin-top: 8px;
+  }
+
+  .transition-heading {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.4;
+    margin: 0 0 6px;
+  }
+
+  .total-scope-note {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-sub);
+    margin: 6px 0 0;
+  }
+
+  .choice-btn .choice-number {
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: var(--color-accent);
+    font-size: 15px;
+  }
+
+  .meta {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin: 0 0 32px;
+    padding: 10px 14px;
+    background: var(--color-accent-tint);
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  .question-block {
+    background: var(--color-surface);
+    border-radius: 12px;
+    padding: 20px 20px 22px;
+    margin-bottom: 40px;
+  }
+
+  .question-block .q-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+
+  .question-block .q-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    padding-left: 14px;
+    border-left: 3px solid var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    font-family: inherit;
+    font-size: 15px;
+    text-align: left;
+    padding: 16px 18px;
+    border: 1px solid #e9ecf1;
+    border-radius: 10px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+    min-height: 52px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .choice-btn:hover {
+    border-color: var(--color-accent);
+  }
+
+  .choice-btn .check {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 5px;
+    display: inline-block;
+    position: relative;
+  }
+
+  .choice-btn.multi .check {
+    border-radius: 5px;
+  }
+
+  .choice-btn.single .check {
+    border-radius: 50%;
+  }
+
+  .choice-btn.selected {
+    border-color: var(--color-accent);
+    background: var(--color-accent-tint);
+    font-weight: 700;
+  }
+
+  .choice-btn.selected .check {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .choice-btn.selected .check::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .nav-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(250, 249, 246, 0.94);
+    backdrop-filter: blur(4px);
+    border-top: 1px solid var(--color-border);
+    padding: 14px 20px;
+    z-index: 100;
+  }
+
+  .nav-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .btn-back {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-text-sub);
+    background: none;
+    border: none;
+    padding: 10px 6px;
+    cursor: pointer;
+  }
+
+  .btn-back:hover {
+    color: var(--color-text);
+    text-decoration: underline;
+  }
+
+  .btn-back:disabled {
+    visibility: hidden;
+  }
+
+  .btn-primary {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--color-accent);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    cursor: pointer;
+    min-height: 52px;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+
+  .btn-primary:disabled {
+    background: #b9c6da;
+    cursor: not-allowed;
+  }
+
+  .btn-primary.full {
+    width: 100%;
+  }
+
+  #screen-intro .btn-primary {
+    margin-top: 8px;
+  }
+
+  pre.debug {
+    background: #111827;
+    color: #d1fae5;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .debug-note {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    margin-bottom: 12px;
+  }
+
+  /* ---- Result screen ---- */
+
+  .result-section {
+    margin-bottom: 44px;
+  }
+
+  .section-num {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .prompt-card {
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-accent);
+    border-radius: 14px;
+    padding: 22px 20px;
+  }
+
+  .prompt-card h2 {
+    color: var(--color-accent);
+  }
+
+  .prompt-sub {
+    font-size: 14px;
+    color: var(--color-text-sub);
+    margin: 0 0 14px;
+  }
+
+  .prompt-textarea {
+    width: 100%;
+    min-height: 260px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: #f8f9fb;
+    color: var(--color-text);
+    resize: vertical;
+  }
+
+  .copy-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .copy-feedback {
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .process-table-wrap {
+    overflow-x: auto;
+  }
+
+  table.process-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .process-table th {
+    text-align: left;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    padding: 8px 10px;
+    border-bottom: 1.5px solid var(--color-border);
+  }
+
+  .process-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  .process-table tr.row-human {
+    background: var(--color-warn-tint);
+  }
+
+  .process-table td.col-delegable {
+    white-space: nowrap;
+  }
+
+  .process-table tr.row-human td.col-delegable {
+    color: var(--color-warn);
+    font-weight: 700;
+  }
+
+  .process-table .caveat {
+    margin-top: 8px;
+    padding-left: 10px;
+    border-left: 2px solid var(--color-border);
+    font-size: 12px;
+    color: var(--color-text-sub);
+    line-height: 1.6;
+  }
+
+  .process-table tr.row-human .caveat {
+    border-left-color: var(--color-warn);
+  }
+
+  @media (max-width: 640px) {
+    table.process-table thead { display: none; }
+    table.process-table, table.process-table tbody, table.process-table tr, table.process-table td {
+      display: block;
+      width: 100%;
+    }
+    table.process-table tr {
+      margin-bottom: 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: var(--color-surface);
+    }
+    table.process-table tr.row-human {
+      border-color: var(--color-warn);
+    }
+    table.process-table td {
+      border: none;
+      padding: 6px 0;
+    }
+    table.process-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 11px;
+      color: var(--color-text-sub);
+      margin-bottom: 2px;
+    }
+  }
+
+  .calc-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 20px 20px 18px;
+  }
+
+  .calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 6px 0;
+    flex-wrap: wrap;
+  }
+
+  .calc-label {
+    font-size: 13px;
+    color: var(--color-text-sub);
+  }
+
+  .calc-value {
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .calc-note {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    margin: 0 0 8px;
+  }
+
+  .calc-discount-heading {
+    font-size: 13px;
+    color: var(--color-text);
+    margin: 14px 0 6px;
+  }
+
+  .calc-reason-list {
+    margin: 0 0 14px;
+    padding-left: 20px;
+    font-size: 13px;
+    color: var(--color-text);
+    line-height: 1.8;
+  }
+
+  .discount-portion {
+    color: var(--color-text-sub);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .calc-final {
+    border-top: 1.5px solid var(--color-border);
+    margin-top: 10px;
+    padding-top: 12px;
+    font-size: 15px;
+  }
+
+  .calc-final .calc-value {
+    color: var(--color-accent);
+    font-size: 20px;
+  }
+
+  .calc-footnote {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    margin: 12px 0 0;
+  }
+
+  .big-number {
+    font-size: 46px;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+  }
+
+  .big-number .unit {
+    font-size: 20px;
+    font-weight: 700;
+    margin-left: 6px;
+    color: var(--color-text-sub);
+  }
+
+  .translated-line {
+    font-size: 15px;
+    color: var(--color-text-sub);
+    margin: 10px 0 0;
+  }
+
+  .bar-row {
+    margin-bottom: 16px;
+  }
+
+  .bar-row .bar-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+
+  .bar-track {
+    background: var(--color-border);
+    border-radius: 6px;
+    height: 14px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    background: var(--color-accent);
+    height: 100%;
+    border-radius: 6px;
+  }
+
+  .priority-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .priority-list li {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .priority-rank {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--color-accent);
+    width: 26px;
+    flex: 0 0 26px;
+  }
+
+  .priority-title {
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .priority-meta {
+    font-size: 13px;
+    color: var(--color-text-sub);
+  }
+
+  .step2-card {
+    background: var(--color-accent-tint);
+    border-radius: 14px;
+    padding: 22px 20px;
+  }
+
+  .restart-wrap {
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .restart-btn {
+    font-size: 14px;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+<main class="container" id="screen-root"></main>
+
+<div class="nav-bar" id="nav-bar" style="display:none;">
+  <div class="nav-inner">
+    <button class="btn-back" id="btn-back">← 戻る</button>
+    <button class="btn-primary" id="btn-next">次へ</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var BUSINESSES = [
+    { id: "weekly",  label: "部下の週報・日報の取りまとめ（週次）" },
+    { id: "meeting", label: "会議資料・議題の作成（週次）" },
+    { id: "review",  label: "部下の評価コメント作成（半期）" },
+    { id: "ringi",   label: "稟議・申請書の説明文作成（随時）" },
+    { id: "numbers", label: "部門数字の説明文作成（月次報告のコメント）" }
+  ];
+
+  var COMMON_QUESTIONS = [
+    {
+      key: "experience",
+      label: "生成AIに業務を任せてみた経験は？",
+      options: [
+        { label: "ない", weight: 0.9 },
+        { label: "試したがうまくいかなかった", weight: 0.85 },
+        { label: "ある程度使えている", weight: 1.0 }
+      ]
+    },
+    {
+      key: "materials",
+      label: "選んだ業務で文章を作るとき、材料はどこにありますか？",
+      options: [
+        { label: "手元にまとまっている", weight: 1.0 },
+        { label: "複数の場所に散らばっている", weight: 0.85 },
+        { label: "どこにあるか探すところから", weight: 0.7 }
+      ]
+    },
+    {
+      key: "editAmount",
+      label: "AIが下書きを出してきたとして、あなたはどれくらい手を入れそうですか？",
+      options: [
+        { label: "ほぼそのまま使えそう", weight: 1.0 },
+        { label: "半分くらいは書き直しそう", weight: 0.9 },
+        { label: "結局ほとんど自分で書き直しそう", weight: 0.8 }
+      ]
+    }
+  ];
+
+  var BIZ_QUESTIONS = {
+    weekly: [
+      { key: "members", label: "部下の人数は？", options: ["1〜3人", "4〜7人", "8人以上"] },
+      { key: "hours",   label: "週あたりの所要時間は？", options: ["1時間未満", "1〜3時間", "3時間以上"] },
+      { key: "format",  label: "部下の週報フォーマットは？", options: ["統一されている", "バラバラ"] }
+    ],
+    meeting: [
+      { key: "hours",  label: "週あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
+      { key: "format", label: "資料の定型度は？", options: ["毎回ほぼ同じ型", "都度内容が変わる"] }
+    ],
+    review: [
+      { key: "hours",  label: "半期あたりの所要時間は？", options: ["3時間未満", "3〜6時間", "6時間以上"] },
+      { key: "format", label: "書く内容の定型度は？", options: ["毎回同じような書き方でよい", "部下ごとに大きく変える必要がある"] }
+    ],
+    ringi: [
+      { key: "hours",     label: "1回あたりの所要時間は？", options: ["30分未満", "30分〜1時間", "1時間以上"] },
+      { key: "frequency", label: "月にどれくらい発生しますか？", options: ["月1件程度", "月2〜4件", "月5件以上"] }
+    ],
+    numbers: [
+      { key: "hours",  label: "月あたりの所要時間は？", options: ["1時間未満", "1〜2時間", "2時間以上"] },
+      { key: "format", label: "定型度は？", options: ["毎回同じフォーマット", "都度変わる"] }
+    ]
+  };
+
+  // ---- Process-breakdown / prompt content per business ----
+  // weight = share of that business's current time (sums to 100 per business)
+  // delegable = whether AI can take this step
+  // reason / caveat may be plain strings or functions of state for light personalization
+  var BUSINESS_DATA = {
+    weekly: {
+      commitRatio: 0.55,
+      ease: 1.0,
+      hoursMap: { "1時間未満": 0.5, "1〜3時間": 2, "3時間以上": 4 },
+      steps: [
+        {
+          text: function (s) { return "部下" + (s.biz.weekly.members || "") + "分の報告を読む"; },
+          weight: 20, delegable: true,
+          reason: "読む・整理するだけの作業で、判断は伴わない"
+        },
+        {
+          text: "各人から要点を抜き出す",
+          weight: 20, delegable: true,
+          reason: "書かれている内容から要点を拾うだけの整形作業"
+        },
+        {
+          text: "個人ごとの「基準の揺らぎ」を補正する",
+          weight: 25, delegable: false,
+          reason: function (s) {
+            var base = "8人が同じ「順調です」と書いても、控えめに書く人と盛る人がいる。Aさんの順調とBさんの順調は違う。この補正には各部下の過去の書きぶりとの比較が必要だが、その比較対象は渡したテキストの中に存在しない。";
+            if (s.biz.weekly.format === "バラバラ") {
+              base += "特にフォーマットがバラバラだと、この差はさらに見えにくくなります。";
+            }
+            return base;
+          }
+        },
+        {
+          text: "引っかかる箇所を見つけ、本人に確認する",
+          weight: 20, delegable: false,
+          reason: "AIは「分からない」と言わない。記述が薄い箇所や前週と辻褄が合わない箇所があっても、それらしくつなげた原稿を返してくる。穴の存在自体が見えなくなる。",
+          caveat: "「どこが引っかかるか」の洗い出しはAIに任せられる。確認そのものが人間に残る。"
+        },
+        {
+          text: "並べ替えて上長向けの文章にする",
+          weight: 15, delegable: true,
+          reason: "材料が整理されていれば、体裁を整える作業は定型的にできる"
+        }
+      ],
+      prompt: function (s) {
+        var n = s.biz.weekly.members || "部下";
+        return "以下は" + n + "の部下から届いた今週の週報です。\n" +
+          "これをもとに、私が上司に報告するための「チーム進捗サマリーの下書き」を作ってください。\n\n" +
+          "【あなたにお願いしたいこと】\n" +
+          "1. 各メンバーの報告を「進捗」「課題・困りごと」「来週の予定」の3項目に整理し直してください\n" +
+          "   （書き方のフォーマットがバラバラなので、表記だけ揃えてください）\n" +
+          "2. メンバー全体を通じて共通して出てきている課題やキーワードがあれば、\n" +
+          "   まとめの一文で示してください\n" +
+          "3. 事実の要約にとどめてください。重要度の判断や優先順位づけ、\n" +
+          "   上司への報告トーンの調整は私が行うので、AIの解釈や評価は加えないでください\n" +
+          "4. 内容が曖昧だったり、事実か意見か判断がつかない記述は「※要確認」として残してください。\n" +
+          "   行間を読んで断定しないでください\n\n" +
+          "【出力形式】\n" +
+          "・メンバー名ごとに箇条書き\n" +
+          "・全体まとめは最後に3行以内で\n\n" +
+          "【今週の週報】\n" +
+          "（ここに" + n + "分の週報を貼り付けてください）";
+      }
+    },
+
+    meeting: {
+      commitRatio: 0.50,
+      ease: 0.9,
+      hoursMap: { "1時間未満": 0.5, "1〜2時間": 1.5, "2時間以上": 2.5 },
+      steps: [
+        {
+          text: "前回議事録から宿題事項・積み残しを洗い出す",
+          weight: 15, delegable: true,
+          reason: "議事録というテキストの中に情報が存在するため、抜き出すだけの作業"
+        },
+        {
+          text: "今週の進捗・数字を各メンバー・各システムから集める",
+          weight: 25, delegable: false,
+          reason: "データの所在が各メンバーや別システムに散らばっており、AIに渡せるテキストの形になっていない",
+          caveat: "「何を・誰に確認すべきか」のリスト化はAIに任せられる。実際に取りに行く行為は人間が行う。"
+        },
+        {
+          text: "集めた材料から議題ごとの資料たたき台を作る",
+          weight: 25, delegable: true,
+          reason: "材料さえそろえば、構成・文章化は定型作業"
+        },
+        {
+          text: "どの議題にどれだけ時間を割き、今週の重点をどこに置くか決める",
+          weight: 25, delegable: false,
+          reason: "何を重点にすべきかは、経営層が直近「どこを見ているか」という視点の変化に左右される。この視点は先週の会議や上司との立ち話の中にしかなく、渡せる資料には残っていない",
+          caveat: "各議題の背景情報を並べて判断材料の一覧を作るところまではAIに任せられる。何を重点にするかの決定は人間が行う。"
+        },
+        {
+          text: "資料の体裁を整えて配布する",
+          weight: 10, delegable: true,
+          reason: "材料が確定していれば、整形はAIの補助が効く"
+        }
+      ],
+      prompt: function () {
+        return "以下は今週のチーム進捗に関する共有事項です（数字やメンバーからの報告を箇条書きで貼っています）。\n" +
+          "これをもとに、週次会議で使う「議題メモ」のたたき台を作ってください。\n\n" +
+          "【あなたにお願いしたいこと】\n" +
+          "1. 内容を「共有事項（報告のみ）」「相談・決定が必要な事項」の2つに分類してください\n" +
+          "2. それぞれに、会議で何分程度話す想定かの目安を入れてください（合計30分想定）\n" +
+          "3. 情報が足りず、会議で誰かに確認しないと議題として成立しない項目があれば\n" +
+          "   「※情報不足：誰に確認すべきか」を明記してください\n" +
+          "4. 「相談・決定が必要な事項」の優先順位は付けないでください。それは私が判断します\n\n" +
+          "【出力形式】\n" +
+          "・見出しごとに箇条書き、想定時間を末尾に（例：5分）\n\n" +
+          "【今週の共有事項】\n" +
+          "（ここに貼り付けてください）";
+      }
+    },
+
+    review: {
+      commitRatio: 0.40,
+      ease: 0.35,
+      hoursMap: { "3時間未満": 2, "3〜6時間": 4.5, "6時間以上": 7 },
+      steps: [
+        {
+          text: "半期分の週報・1on1メモを探し出し、集める",
+          weight: 20, delegable: false,
+          reason: "メモがSlack・メール・手書きノートなど複数の場所に分散しており、どこに何が残っているかを把握しているのは本人だけだから",
+          caveat: "「何月分のどんな記録が必要か」というチェックリストの作成はAIに任せられる。実際に探して集める行為は人間が行う。"
+        },
+        {
+          text: "集めたメモから評価に使えるエピソードを拾い出す",
+          weight: 20, delegable: true,
+          reason: "材料（週報・メモ）を渡せば、そこに書かれた事実を拾う作業"
+        },
+        {
+          text: "拾ったエピソードを文章として下書きにする",
+          weight: 20, delegable: true,
+          reason: "材料に基づく文章化は定型作業"
+        },
+        {
+          text: "評価点数・グレードとの整合を取り、記述のトーンを調整する",
+          weight: 25, delegable: false,
+          reason: "何点だからどのトーンで書くべきかという評価制度の運用感覚や本人の評価履歴は、渡したテキストの外にある情報",
+          caveat: "過去の評価コメントと今回書いた内容を並べて「トーンの違い」を指摘させることはAIに任せられる。整合させる最終判断は人間が行う。"
+        },
+        {
+          text: "本人のキャリア意向や関係性を踏まえて言葉を最終調整する",
+          weight: 15, delegable: false,
+          reason: "「この表現を本人はどう受け取るか」は、その部下と重ねてきた過去のやり取り（響いた言葉、逆効果だった言い回し）の蓄積という、上司個人の記憶の中にしかない情報",
+          caveat: "伝え方の候補を複数パターン出させることはAIに任せられる。どれを選ぶかは人間が判断する。"
+        }
+      ],
+      prompt: function () {
+        return "以下は、部下Aさんについて半期の間に書きためた週報・1on1メモです。\n" +
+          "これを整理して、評価コメントの「材料メモ」を作ってください（完成文ではありません）。\n\n" +
+          "【あなたにお願いしたいこと】\n" +
+          "1. 成果・工夫が読み取れるエピソードを時系列で箇条書きに拾い出してください\n" +
+          "2. 良い点／課題として読み取れる点を分けてください\n" +
+          "3. 評価のトーン（高評価か改善要望か）や点数の判断はせず、材料の整理までにとどめてください\n" +
+          "4. エピソードが少なく材料が薄いと感じる期間があれば教えてください\n\n" +
+          "【今期の週報・1on1メモ】\n" +
+          "（ここに貼り付けてください）";
+      }
+    },
+
+    ringi: {
+      commitRatio: 0.60,
+      ease: 0.6,
+      hoursMap: { "30分未満": 0.25, "30分〜1時間": 0.75, "1時間以上": 1.5 },
+      steps: [
+        {
+          text: "申請の目的・背景を箇条書きメモにする",
+          weight: 20, delegable: false,
+          reason: "「なぜ必要か」の判断根拠は申請者本人の頭の中にしかなく、テキスト化される前の情報",
+          caveat: "「稟議で聞かれやすい質問リスト」を提示させ、書き漏れがないか確認させることはAIに任せられる。目的・背景そのものを考えるのは人間が行う。"
+        },
+        {
+          text: "メモを社内稟議フォーマットに沿った説明文に整える",
+          weight: 35, delegable: true,
+          reason: "メモという材料があれば、フォーマット化は定型作業"
+        },
+        {
+          text: "「代替案との比較」「費用対効果」の記述に抜け漏れがないかチェックする",
+          weight: 25, delegable: true,
+          reason: "稟議で問われやすい観点は一般的パターンとしてAIが照合できる"
+        },
+        {
+          text: "決裁者の過去の指摘傾向を踏まえて通りやすい言い回しに調整する",
+          weight: 20, delegable: false,
+          reason: "「この決裁者が何を気にするか」は社内の経験則であり、テキストの中には存在しない情報",
+          caveat: "過去に通った稟議文と表現を比較させ、違いを洗い出すことはAIに任せられる（比較対象を人間が用意すれば）。最終的な言い回しの判断は人間が行う。"
+        }
+      ],
+      prompt: function () {
+        return "以下は、稟議書に書きたい内容の箇条書きメモです（目的・背景・費用などを簡単に書いています）。\n" +
+          "これを、社内の稟議フォーマットで通りやすい説明文に整えてください。\n\n" +
+          "【あなたにお願いしたいこと】\n" +
+          "1. 「目的」「背景」「費用・効果」「代替案との比較」の項目に分けて文章化してください\n" +
+          "2. 「なぜ今なのか」「他の方法ではダメなのか」への回答がメモに含まれていない場合は、\n" +
+          "   その項目に「※記載なし」と入れてください（憶測で埋めないでください）\n" +
+          "3. 文体は社内向けのフォーマルな文章にしてください\n\n" +
+          "【メモ】\n" +
+          "（ここに貼り付けてください）";
+      }
+    },
+
+    numbers: {
+      commitRatio: 0.65,
+      ease: 0.7,
+      hoursMap: { "1時間未満": 0.5, "1〜2時間": 1.5, "2時間以上": 2.5 },
+      steps: [
+        {
+          text: "数字の変動要因を洗い出す（現場実態の把握）",
+          weight: 20, delegable: false,
+          reason: "数字の背景にある実態は、数字そのものやテキストの中には存在しない、現場から直接得る情報",
+          caveat: "前月との差分から「どの科目に変動があるか」をリスト化し、確認すべき項目を絞り込むことはAIに任せられる。実際に理由を確認するのは人間が行う。"
+        },
+        {
+          text: "数字と要因メモをレポート用の説明文に文章化する",
+          weight: 35, delegable: true,
+          reason: "材料（数字＋要因メモ）が揃えば定型的な変換作業"
+        },
+        {
+          text: "前月・前年との比較コメントを整える",
+          weight: 30, delegable: true,
+          reason: "比較自体は機械的処理で、材料があれば文章化できる"
+        },
+        {
+          text: "経営層が今回とくに気にしそうな数字に強弱をつける",
+          weight: 15, delegable: false,
+          reason: "どの数字が注目されるかは、直近の経営会議で誰が何を問題視していたかという「関心の温度」に左右される。この温度感は会議の場の空気であり、集計データという形では残っていない",
+          caveat: "各数字を並べて「例年と違う動きをしている項目」を機械的に検出させることはAIに任せられる。どれを経営層向けに強調するかの判断は人間が行う。"
+        }
+      ],
+      prompt: function () {
+        return "以下は、今月の部門数字と、その変動要因についてのメモです。\n" +
+          "これをもとに、月次報告用の「数字の説明文」を作ってください。\n\n" +
+          "【あなたにお願いしたいこと】\n" +
+          "1. 数字と要因メモを対応づけて、増減の理由が分かる説明文にしてください\n" +
+          "2. 前月・前年との比較がメモにあれば、比較コメントとして加えてください\n" +
+          "3. メモに書かれていない数字は、憶測で理由をつけずに「※要因未確認」としてください\n" +
+          "4. どの数字を強調するかの判断はせず、すべて同じ重みで書いてください（強弱づけは私が行います）\n\n" +
+          "【数字と要因メモ】\n" +
+          "（ここに貼り付けてください）";
+      }
+    }
+  };
+
+  var EASE_COMMENTS = {
+    weekly: "毎週のことなので、来週からすぐ試せます",
+    meeting: "こちらも毎週発生するので、並行して試せます",
+    numbers: "月1回なので、次の月次報告で試せます",
+    ringi: "発生タイミングが不定期なので、次に申請するときに試してください",
+    review: "半年に一度なので、次の評価タイミングまでに慣れておくと安心です"
+  };
+
+  var STEP2_COVER_MESSAGE = "これ、週報を書くときに使ってみてください。\n" +
+    "AIに貼り付けると下書きが出てきます。書き方を変えてほしいという話ではなく、\n" +
+    "単純に楽になりそうだったので共有します。今まで通りの内容で大丈夫です。";
+
+  var STEP2_PROMPT = "これはあなたが今週の週報を書くための下書きツールです。\n\n" +
+    "【メモを書くときのコツ】\n" +
+    "・「順調」で済ませず、何がどれだけ進んだかを書く\n" +
+    "・困っていることは具体的に。ネガティブに見えても構わない\n" +
+    "・数字や案件名はぼかさずそのまま書く\n\n" +
+    "── ここから下をAIに貼り付けてください ──\n\n" +
+    "【AIへの指示】\n" +
+    "以下は、私（部下本人）が今週やったことをメモした内容です。これをもとに週報の下書きを作ってください。\n" +
+    "・メモを「進捗」「課題・困りごと」「来週の予定」の3項目に整理してください\n" +
+    "・メモにない内容は憶測で埋めないでください\n" +
+    "・書かれた事実の整理にとどめ、評価や解釈は加えないでください\n\n" +
+    "【今週のメモ】\n" +
+    "（ここに、メールやフォルダの資料、前週の週報を見返しながら、今週やったことを書き出してください）";
+
+  // ---- Calculation (weights not shown on screen, only their effect) ----
+
+  function getCommonWeight(key, value) {
+    var q = COMMON_QUESTIONS.filter(function (qq) { return qq.key === key; })[0];
+    if (!q) return 1;
+    var opt = q.options.filter(function (o) {
+      return (typeof o === "string" ? o : o.label) === value;
+    })[0];
+    if (!opt) return 1;
+    return typeof opt === "string" ? 1 : (opt.weight != null ? opt.weight : 1);
+  }
+
+  var RINGI_FREQUENCY_MAP = { "月1件程度": 1, "月2〜4件": 3, "月5件以上": 6 };
+
+  function getRingiMonthlyCount(s) {
+    var count = RINGI_FREQUENCY_MAP[s.biz.ringi.frequency];
+    return count != null ? count : 1;
+  }
+
+  function weeklyEquivalentHours(bizId, s) {
+    var data = BUSINESS_DATA[bizId];
+    var raw = data.hoursMap[s.biz[bizId].hours];
+    if (raw == null) return 0;
+    if (bizId === "review") return raw / 26;   // half-year total -> weekly
+    if (bizId === "numbers") return raw / 4.3; // monthly total -> weekly
+    if (bizId === "ringi") return (raw * getRingiMonthlyCount(s)) / 4.3; // per-occurrence x monthly count -> weekly
+    return raw; // weekly / meeting are already weekly figures
+  }
+
+  function weeklyReduction(bizId, s) {
+    var data = BUSINESS_DATA[bizId];
+    var base = weeklyEquivalentHours(bizId, s);
+    var materialW = getCommonWeight("materials", s.common.materials);
+    var editW = getCommonWeight("editAmount", s.common.editAmount);
+    var expW = getCommonWeight("experience", s.common.experience);
+    return base * data.commitRatio * materialW * editW * expW;
+  }
+
+  function formatHours(v) {
+    var r = Math.round(v * 10) / 10;
+    if (r < 0.1 && v > 0) r = 0.1;
+    return r.toString();
+  }
+
+  function fmt1(v) { return v.toFixed(1); }
+  function fmt2(v) { return v.toFixed(2); }
+
+  var OCCURRENCE_NOUN = { review: "回", numbers: "回", ringi: "件" };
+
+  function formatDuration(hours) {
+    if (hours < 1) {
+      var min = Math.round((hours * 60) / 5) * 5;
+      if (min <= 0) min = 5;
+      return min + "分";
+    }
+    return fmt1(hours) + "時間";
+  }
+
+  // Consequence-oriented phrasing for each below-1.0 answer, used in the calc breakdown
+  var DISCOUNT_REASON_TEXT = {
+    materials: {
+      "複数の場所に散らばっている": "材料が複数の場所に散らばっており、探す手間がかかるため",
+      "どこにあるか探すところから": "材料をどこにあるか探すところから始める必要があるため"
+    },
+    editAmount: {
+      "半分くらいは書き直しそう": "AIの下書きを半分程度は書き直す想定のため",
+      "結局ほとんど自分で書き直しそう": "AIの下書きをほとんど書き直す想定のため"
+    },
+    experience: {
+      "ない": "生成AIに慣れるまで時間がかかるため",
+      "試したがうまくいかなかった": "過去にうまくいかなかった経験があり、慣れるまで時間がかかるため"
+    }
+  };
+
+  function discountPortionLabel(weight) {
+    var tenths = Math.round((1 - weight) * 10);
+    if (tenths <= 0) return null;
+    return "約" + tenths + "割ぶん差し引き";
+  }
+
+  function copyToClipboard(text, cb) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { cb(true); }).catch(function () { fallbackCopy(text, cb); });
+    } else {
+      fallbackCopy(text, cb);
+    }
+  }
+
+  function fallbackCopy(text, cb) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      cb(ok);
+    } catch (e) {
+      cb(false);
+    }
+  }
+
+  var state = {
+    businesses: [],
+    common: { experience: null, materials: null, editAmount: null },
+    biz: {
+      weekly:  { members: null, hours: null, format: null },
+      meeting: { hours: null, format: null },
+      review:  { hours: null, format: null },
+      ringi:   { hours: null, frequency: null },
+      numbers: { hours: null, format: null }
+    }
+  };
+
+  var currentScreenId = "intro";
+
+  function getFlow() {
+    var flow = ["intro", "business-select", "common"];
+    BUSINESSES.forEach(function (b) {
+      if (state.businesses.indexOf(b.id) !== -1) {
+        flow.push("biz-" + b.id);
+      }
+    });
+    flow.push("result");
+    return flow;
+  }
+
+  function isScreenValid(screenId) {
+    if (screenId === "intro") return true;
+    if (screenId === "business-select") return state.businesses.length > 0;
+    if (screenId === "common") {
+      return COMMON_QUESTIONS.every(function (q) { return state.common[q.key] !== null; });
+    }
+    if (screenId.indexOf("biz-") === 0) {
+      var bizId = screenId.slice(4);
+      var questions = BIZ_QUESTIONS[bizId];
+      return questions.every(function (q) { return state.biz[bizId][q.key] !== null; });
+    }
+    return true;
+  }
+
+  function goNext() {
+    var flow = getFlow();
+    var idx = flow.indexOf(currentScreenId);
+    if (idx < flow.length - 1) {
+      currentScreenId = flow[idx + 1];
+      render();
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function goBack() {
+    var flow = getFlow();
+    var idx = flow.indexOf(currentScreenId);
+    if (idx > 0) {
+      currentScreenId = flow[idx - 1];
+      render();
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function renderSingleChoiceQuestion(question, currentValue, onSelect, tag) {
+    var block = el("div", { class: "question-block" });
+    if (tag) block.appendChild(el("div", { class: "q-tag", text: tag }));
+    block.appendChild(el("div", { class: "q-label", text: question.label }));
+    var list = el("div", { class: "choice-list" });
+    question.options.forEach(function (opt) {
+      var label = typeof opt === "string" ? opt : opt.label;
+      var selected = currentValue === label;
+      var btn = el("button", {
+        type: "button",
+        class: "choice-btn single" + (selected ? " selected" : "")
+      });
+      btn.appendChild(el("span", { class: "check" }));
+      btn.appendChild(el("span", { text: label }));
+      btn.addEventListener("click", function () {
+        onSelect(label);
+        render();
+      });
+      list.appendChild(btn);
+    });
+    block.appendChild(list);
+    return block;
+  }
+
+  function renderIntro() {
+    var root = el("div", { id: "screen-intro" });
+    root.appendChild(el("h1", { text: "AIに渡せる仕事、渡せない仕事" }));
+    root.appendChild(el("p", {
+      class: "lead",
+      text: "いくつかの質問に答えると、あなたの業務のうち「AIに任せていい工程」と「自分でやるべき工程」の線引きと、明日から使えるプロンプトが手に入ります。"
+    }));
+    root.appendChild(el("div", { class: "meta", text: "所要時間の目安：3分以内／すべて選択式（タップのみ）" }));
+    var startBtn = el("button", { type: "button", class: "btn-primary full", text: "はじめる" });
+    startBtn.addEventListener("click", goNext);
+    root.appendChild(startBtn);
+    return root;
+  }
+
+  function renderBusinessSelect() {
+    var root = el("div", { id: "screen-business" });
+    root.appendChild(el("h2", { class: "section-title-lg", text: "担当している業務を選んでください" }));
+    root.appendChild(el("p", { class: "sub", text: "複数選択できます。1つだけでも結果は表示されます。" }));
+    var list = el("div", { class: "choice-list" });
+    BUSINESSES.forEach(function (b) {
+      var selected = state.businesses.indexOf(b.id) !== -1;
+      var btn = el("button", {
+        type: "button",
+        class: "choice-btn multi" + (selected ? " selected" : "")
+      });
+      btn.appendChild(el("span", { class: "check" }));
+      btn.appendChild(el("span", { class: "choice-number", text: BIZ_NUMBER[b.id] }));
+      btn.appendChild(el("span", { text: b.label }));
+      btn.addEventListener("click", function () {
+        var pos = state.businesses.indexOf(b.id);
+        if (pos === -1) state.businesses.push(b.id);
+        else state.businesses.splice(pos, 1);
+        render();
+      });
+      list.appendChild(btn);
+    });
+    root.appendChild(list);
+    return root;
+  }
+
+  var BIZ_TAG_LABELS = {
+    weekly: "①週報",
+    meeting: "②会議資料",
+    review: "③評価コメント",
+    ringi: "④稟議・申請書",
+    numbers: "⑤部門数字"
+  };
+
+  var BIZ_NUMBER = {
+    weekly: "①",
+    meeting: "②",
+    review: "③",
+    ringi: "④",
+    numbers: "⑤"
+  };
+
+  function renderCommon() {
+    var root = el("div", { id: "screen-common" });
+    root.appendChild(el("h2", { class: "section-title-lg", text: "まず、全体について3つ" }));
+    root.appendChild(el("p", { class: "sub", text: "どの業務にも共通する質問です。" }));
+    COMMON_QUESTIONS.forEach(function (q, i) {
+      root.appendChild(renderSingleChoiceQuestion(q, state.common[q.key], function (val) {
+        state.common[q.key] = val;
+      }, "共通 Q" + (i + 1)));
+    });
+    return root;
+  }
+
+  function renderBizScreen(bizId) {
+    var biz = BUSINESSES.filter(function (b) { return b.id === bizId; })[0];
+    var questions = BIZ_QUESTIONS[bizId];
+    var tagPrefix = BIZ_TAG_LABELS[bizId];
+    var root = el("div", { id: "screen-biz-" + bizId });
+    var header = el("div", { class: "biz-header" });
+    header.appendChild(el("div", { class: "biz-number", text: BIZ_NUMBER[bizId] }));
+    header.appendChild(el("div", { class: "biz-name", text: biz.label }));
+    header.appendChild(el("div", { class: "biz-sub", text: "この業務について、あと" + questions.length + "問です。" }));
+    root.appendChild(header);
+    questions.forEach(function (q, i) {
+      root.appendChild(renderSingleChoiceQuestion(q, state.biz[bizId][q.key], function (val) {
+        state.biz[bizId][q.key] = val;
+      }, tagPrefix + " Q" + (i + 1)));
+    });
+    return root;
+  }
+
+  function renderPromptBlock(promptText, buttonLabel) {
+    var textarea = el("textarea", { class: "prompt-textarea", readonly: "readonly" });
+    textarea.value = promptText;
+    textarea.addEventListener("click", function () { textarea.select(); });
+
+    var copyBtn = el("button", { type: "button", class: "btn-primary copy-btn", text: buttonLabel });
+    var feedback = el("span", { class: "copy-feedback" });
+    copyBtn.addEventListener("click", function () {
+      copyToClipboard(promptText, function (ok) {
+        feedback.textContent = ok ? "コピーしました" : "コピーできませんでした。テキストを選択してコピーしてください";
+        setTimeout(function () { feedback.textContent = ""; }, 2500);
+      });
+    });
+
+    var row = el("div", { class: "copy-row" });
+    row.appendChild(copyBtn);
+    row.appendChild(feedback);
+
+    var wrap = el("div", {});
+    wrap.appendChild(textarea);
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function renderPromptSection(topId) {
+    var data = BUSINESS_DATA[topId];
+    var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
+
+    var section = el("div", { class: "result-section prompt-card" });
+    section.appendChild(el("div", { class: "section-num", text: "STEP 1" }));
+    section.appendChild(el("h2", { text: "まずこれ1本、月曜の朝に試してください" }));
+    section.appendChild(el("p", {
+      class: "prompt-sub",
+      text: "最優先の業務は「" + bizLabel + "」です。以下をコピーして、手元のAI（Copilot、ChatGPTなど）に貼り付けてください。"
+    }));
+    section.appendChild(renderPromptBlock(data.prompt(state), "プロンプトをコピー"));
+    return section;
+  }
+
+  function renderProcessSection(topId) {
+    var data = BUSINESS_DATA[topId];
+    var section = el("div", { class: "result-section" });
+    section.appendChild(el("div", { class: "section-num", text: "STEP 1 の根拠" }));
+    section.appendChild(el("h2", { text: "工程分解：どこまでAIに渡せるか" }));
+    section.appendChild(el("p", { class: "sub", text: "色のついた行が、あなた自身で行うべき工程です。" }));
+
+    var wrap = el("div", { class: "process-table-wrap" });
+    var table = el("table", { class: "process-table" });
+
+    var thead = el("thead", {});
+    var headRow = el("tr", {});
+    ["工程", "比重", "AIに渡せるか", "理由"].forEach(function (h) {
+      headRow.appendChild(el("th", { text: h }));
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = el("tbody", {});
+    data.steps.forEach(function (step) {
+      var tr = el("tr", { class: step.delegable ? "" : "row-human" });
+      var stepText = typeof step.text === "function" ? step.text(state) : step.text;
+      var reasonText = typeof step.reason === "function" ? step.reason(state) : step.reason;
+
+      var tdStep = el("td", { "data-label": "工程", text: stepText });
+      var tdWeight = el("td", { "data-label": "比重", text: step.weight + "%" });
+      var tdDelegable = el("td", {
+        "data-label": "AIに渡せるか",
+        class: "col-delegable",
+        text: step.delegable ? "○ 渡せる" : "✕ 渡せない"
+      });
+      var tdReason = el("td", { "data-label": "理由" });
+      tdReason.appendChild(el("div", { text: reasonText }));
+      if (step.caveat) {
+        tdReason.appendChild(el("div", { class: "caveat", text: "※ただし、" + step.caveat }));
+      }
+
+      tr.appendChild(tdStep);
+      tr.appendChild(tdWeight);
+      tr.appendChild(tdDelegable);
+      tr.appendChild(tdReason);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    section.appendChild(wrap);
+    return section;
+  }
+
+  function renderCalcSection(topId) {
+    var data = BUSINESS_DATA[topId];
+    var s = state;
+    var selectedHoursLabel = s.biz[topId].hours;
+    var rawValue = data.hoursMap[selectedHoursLabel];
+
+    var cadenceUnit, weeklyBase, conversionReason;
+    if (topId === "review") {
+      cadenceUnit = "半期";
+      weeklyBase = rawValue / 26;
+      conversionReason = "半期に一度のため";
+    } else if (topId === "numbers") {
+      cadenceUnit = "月";
+      weeklyBase = rawValue / 4.3;
+      conversionReason = "月次の業務のため";
+    } else if (topId === "ringi") {
+      var ringiCount = getRingiMonthlyCount(s);
+      cadenceUnit = "1回あたり";
+      weeklyBase = (rawValue * ringiCount) / 4.3;
+      conversionReason = "随時発生する業務のため（" + s.biz.ringi.frequency + "として計算）";
+    } else {
+      cadenceUnit = "週";
+      weeklyBase = rawValue;
+      conversionReason = null;
+    }
+
+    var delegableWeight = data.steps.reduce(function (sum, st) {
+      return sum + (st.delegable ? st.weight : 0);
+    }, 0);
+    var afterCommit = weeklyBase * (delegableWeight / 100);
+
+    var materialsVal = s.common.materials;
+    var editVal = s.common.editAmount;
+    var expVal = s.common.experience;
+
+    var reasons = [];
+    [
+      { key: "materials", val: materialsVal },
+      { key: "editAmount", val: editVal },
+      { key: "experience", val: expVal }
+    ].forEach(function (item) {
+      var w = getCommonWeight(item.key, item.val);
+      var portion = discountPortionLabel(w);
+      if (portion) {
+        var text = (DISCOUNT_REASON_TEXT[item.key] && DISCOUNT_REASON_TEXT[item.key][item.val]) || item.val;
+        reasons.push({ text: text, portion: portion });
+      }
+    });
+
+    var finalValue = weeklyReduction(topId, s);
+
+    var section = el("div", { class: "result-section calc-card" });
+    section.appendChild(el("div", { class: "section-num", text: "根拠" }));
+    section.appendChild(el("h2", { text: "この時間はこう計算しています" }));
+
+    var row1 = el("div", { class: "calc-row" });
+    row1.appendChild(el("span", { class: "calc-label", text: "現在かけている時間" }));
+    row1.appendChild(el("span", {
+      class: "calc-value",
+      text: cadenceUnit + selectedHoursLabel + "（あなたの回答）／ " + rawValue + "時間として計算"
+    }));
+    section.appendChild(row1);
+    if (conversionReason) {
+      section.appendChild(el("div", {
+        class: "calc-note",
+        text: "※この業務は" + conversionReason + "、以降は週あたりに換算した数字で表示します（週" + fmt2(weeklyBase) + "時間）"
+      }));
+    }
+
+    var row2 = el("div", { class: "calc-row" });
+    row2.appendChild(el("span", { class: "calc-label", text: "うちAIに渡せる工程の比重" }));
+    row2.appendChild(el("span", { class: "calc-value", text: delegableWeight + "%（上の表の「渡せる」工程の比重合計）" }));
+    section.appendChild(row2);
+    section.appendChild(el("div", { class: "calc-note", text: "→ " + fmt2(afterCommit) + "時間" }));
+
+    if (reasons.length > 0) {
+      section.appendChild(el("p", {
+        class: "calc-discount-heading",
+        text: "ここから、以下の事情を踏まえて差し引いています："
+      }));
+      var ul = el("ul", { class: "calc-reason-list" });
+      reasons.forEach(function (r) {
+        var li = el("li", {});
+        li.appendChild(document.createTextNode(r.text + "　"));
+        li.appendChild(el("span", { class: "discount-portion", text: "… " + r.portion }));
+        ul.appendChild(li);
+      });
+      section.appendChild(ul);
+    }
+
+    var finalRow = el("div", { class: "calc-row calc-final" });
+    finalRow.appendChild(el("span", {
+      class: "calc-label",
+      text: "この業務（" + BIZ_TAG_LABELS[topId] + "）の削減見込み"
+    }));
+    finalRow.appendChild(el("span", { class: "calc-value", text: "週" + fmt1(finalValue) + "時間" }));
+    section.appendChild(finalRow);
+
+    section.appendChild(el("p", {
+      class: "calc-footnote",
+      text: "※控えめに見積もっています。実際にはもう少し縮む可能性があります。"
+    }));
+
+    return section;
+  }
+
+  function renderTotalSection(total, topId, chosenCount) {
+    var section = el("div", { class: "result-section" });
+    section.appendChild(el("div", { class: "section-num", text: "全体" }));
+    section.appendChild(el("h2", { text: "週あたりの合計削減時間" }));
+
+    var big = el("div", { class: "big-number" });
+    big.appendChild(document.createTextNode(formatHours(total)));
+    big.appendChild(el("span", { class: "unit", text: "時間 / 週" }));
+    section.appendChild(big);
+
+    var isSporadic = topId === "review" || topId === "numbers" || topId === "ringi";
+
+    if (isSporadic) {
+      var perOcc;
+      if (topId === "review") perOcc = weeklyReduction(topId, state) * 26;
+      else if (topId === "numbers") perOcc = weeklyReduction(topId, state) * 4.3;
+      else perOcc = (weeklyReduction(topId, state) * 4.3) / getRingiMonthlyCount(state);
+
+      var bizLabel = BUSINESSES.filter(function (b) { return b.id === topId; })[0].label;
+      var occNoun = OCCURRENCE_NOUN[topId];
+      section.appendChild(el("p", {
+        class: "translated-line",
+        text: "週" + formatHours(total) + "時間 ／ " + bizLabel + "は1" + occNoun + "あたり 約" + formatDuration(perOcc) + "の削減見込みです（毎週の業務ではないため、週で割ると数字が小さく見えます）。"
+      }));
+    }
+
+    var days = Math.round((total / 2) * 2) / 2; // 2h ≈ 1 evening of overtime, rounded to nearest 0.5
+    var dayText;
+    if (days >= 0.5) {
+      dayText = "定時後の作業が、週" + days + "日ぶん減る計算です。";
+    } else if (chosenCount === 1) {
+      dayText = "この業務については、上の工程分解とプロンプトから始めてください。他の業務も気になる場合は、やり直して複数選ぶと優先順位が出ます。";
+    } else if (isSporadic) {
+      dayText = "毎週の業務ではないため週あたりでは小さく見えますが、1" + OCCURRENCE_NOUN[topId] + "ごとの負担は確実に減ります。";
+    } else {
+      dayText = "今回の回答では、はっきり数字に出るほどの削減にはなりませんでした。まずは最優先の1業務からで十分です。";
+    }
+    section.appendChild(el("p", { class: "translated-line", text: dayText }));
+    return section;
+  }
+
+  function renderBreakdownSection(chosen, reductions) {
+    var section = el("div", { class: "result-section" });
+    section.appendChild(el("div", { class: "section-num", text: "内訳" }));
+    section.appendChild(el("h2", { text: "選んだ業務ごとの内訳" }));
+
+    var max = Math.max.apply(null, chosen.map(function (id) { return reductions[id]; }).concat([0.01]));
+    chosen.forEach(function (id) {
+      var label = BUSINESSES.filter(function (b) { return b.id === id; })[0].label;
+      var val = reductions[id];
+      var pct = Math.max(4, Math.round((val / max) * 100));
+
+      var row = el("div", { class: "bar-row" });
+      var labelRow = el("div", { class: "bar-label" });
+      labelRow.appendChild(el("span", { text: label }));
+      labelRow.appendChild(el("span", { text: formatHours(val) + "時間/週" }));
+      row.appendChild(labelRow);
+
+      var track = el("div", { class: "bar-track" });
+      var fill = el("div", { class: "bar-fill" });
+      fill.style.width = pct + "%";
+      track.appendChild(fill);
+      row.appendChild(track);
+
+      section.appendChild(row);
+    });
+    return section;
+  }
+
+  function renderPrioritySection(order, reductions) {
+    var section = el("div", { class: "result-section" });
+    section.appendChild(el("div", { class: "section-num", text: "優先順位" }));
+    section.appendChild(el("h2", { text: "手をつける優先順位" }));
+    section.appendChild(el("p", { class: "sub", text: "削減できる時間の大きさだけでなく、着手しやすさも踏まえた順番です。" }));
+
+    var list = el("ol", { class: "priority-list" });
+    order.forEach(function (id, i) {
+      var label = BUSINESSES.filter(function (b) { return b.id === id; })[0].label;
+      var li = el("li", {});
+      li.appendChild(el("div", { class: "priority-rank", text: String(i + 1) }));
+      var body = el("div", { class: "priority-body" });
+      body.appendChild(el("div", { class: "priority-title", text: label }));
+      body.appendChild(el("div", {
+        class: "priority-meta",
+        text: formatHours(reductions[id]) + "時間/週の削減見込み ・ " + EASE_COMMENTS[id]
+      }));
+      li.appendChild(body);
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  function renderStep2Section() {
+    var section = el("div", { class: "result-section step2-card" });
+    section.appendChild(el("div", { class: "section-num", text: "STEP 2" }));
+    section.appendChild(el("h2", { text: "来月、部下に渡せること" }));
+    section.appendChild(el("p", {
+      class: "sub",
+      text: "これは、部下自身が手元のAI（Copilot、ChatGPTなど）に貼り付けて、自分の週報を書くためのプロンプトです。書き方を指示する文書ではなく、書いた週報をAIに添削させるものでもありません。「こう書きなさい」という指示だと部下の仕事が増えるだけで続きませんが、AIに書かせる道具として渡せば部下自身も楽になるため定着し、結果として提出される週報の粒度が揃い、あなた側の「基準の揺らぎを補正する」工程が縮んでいきます。定着には数週間かかるため、上の削減時間には含めていません。ここは定着後にさらに減る分です。"
+    }));
+    section.appendChild(el("p", {
+      class: "sub",
+      text: "使い方：以下のプロンプトを部下に送ってください。部下が手元のAIに貼り付けて使うと、週報の下書きが出てきます。"
+    }));
+
+    var coverLabel = el("div", { class: "q-label", text: "部下に送る一言（Slack・メール用）" });
+    section.appendChild(coverLabel);
+    section.appendChild(renderPromptBlock(STEP2_COVER_MESSAGE, "添え文をコピー"));
+
+    var promptLabel = el("div", { class: "q-label", text: "部下が使うプロンプト" });
+    section.appendChild(promptLabel);
+    section.appendChild(renderPromptBlock(STEP2_PROMPT, "部下に送るプロンプトをコピー"));
+
+    return section;
+  }
+
+  function renderResult() {
+    var root = el("div", { id: "screen-result" });
+
+    var chosen = BUSINESSES
+      .filter(function (b) { return state.businesses.indexOf(b.id) !== -1; })
+      .map(function (b) { return b.id; });
+
+    var reductions = {};
+    chosen.forEach(function (id) { reductions[id] = weeklyReduction(id, state); });
+
+    var scores = {};
+    chosen.forEach(function (id) { scores[id] = reductions[id] * BUSINESS_DATA[id].ease; });
+
+    var priorityOrder = chosen.slice().sort(function (a, b) { return scores[b] - scores[a]; });
+    var topId = priorityOrder[0];
+    var totalReduction = chosen.reduce(function (sum, id) { return sum + reductions[id]; }, 0);
+
+    root.appendChild(renderPromptSection(topId));
+    root.appendChild(renderProcessSection(topId));
+    root.appendChild(renderCalcSection(topId));
+    root.appendChild(renderTotalSection(totalReduction, topId, chosen.length));
+    root.appendChild(renderBreakdownSection(chosen, reductions));
+    root.appendChild(renderPrioritySection(priorityOrder, reductions));
+
+    if (topId === "weekly" &&
+        (state.common.materials === "複数の場所に散らばっている" || state.common.materials === "どこにあるか探すところから")) {
+      root.appendChild(renderStep2Section());
+    }
+
+    var restartWrap = el("div", { class: "restart-wrap" });
+    var restartBtn = el("button", { type: "button", class: "btn-back restart-btn", text: "最初からやり直す" });
+    restartBtn.addEventListener("click", function () { location.reload(); });
+    restartWrap.appendChild(restartBtn);
+    root.appendChild(restartWrap);
+
+    return root;
+  }
+
+  function renderScreenContent(screenId) {
+    if (screenId === "intro") return renderIntro();
+    if (screenId === "business-select") return renderBusinessSelect();
+    if (screenId === "common") return renderCommon();
+    if (screenId === "result") return renderResult();
+    if (screenId.indexOf("biz-") === 0) return renderBizScreen(screenId.slice(4));
+    return el("div", {});
+  }
+
+  function updateProgress() {
+    var flow = getFlow();
+    var idx = flow.indexOf(currentScreenId);
+    var pct = flow.length > 1 ? Math.round((idx / (flow.length - 1)) * 100) : 0;
+    document.getElementById("progress-fill").style.width = pct + "%";
+  }
+
+  function updateNavBar() {
+    var navBar = document.getElementById("nav-bar");
+    var backBtn = document.getElementById("btn-back");
+    var nextBtn = document.getElementById("btn-next");
+
+    if (currentScreenId === "intro") {
+      navBar.style.display = "none";
+      return;
+    }
+    navBar.style.display = "block";
+
+    var flow = getFlow();
+    var idx = flow.indexOf(currentScreenId);
+    backBtn.disabled = idx <= 0;
+
+    if (currentScreenId === "result") {
+      nextBtn.style.display = "none";
+    } else {
+      nextBtn.style.display = "inline-block";
+      nextBtn.disabled = !isScreenValid(currentScreenId);
+      nextBtn.textContent = "次へ";
+    }
+  }
+
+  function render() {
+    var root = document.getElementById("screen-root");
+    root.innerHTML = "";
+    root.appendChild(renderScreenContent(currentScreenId));
+    updateProgress();
+    updateNavBar();
+  }
+
+  document.getElementById("btn-back").addEventListener("click", goBack);
+  document.getElementById("btn-next").addEventListener("click", function () {
+    if (isScreenValid(currentScreenId)) goNext();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
