@@ -72,6 +72,23 @@
     color: var(--color-text);
   }
 
+  .audience-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.02em;
+    margin: 0 0 8px;
+  }
+
+  p.pain-point {
+    font-size: 14px;
+    color: var(--color-text);
+    background: var(--color-accent-tint);
+    border-left: 3px solid var(--color-accent);
+    padding: 12px 14px;
+    margin: 0 0 24px;
+  }
+
   h2 {
     font-size: 20px;
     line-height: 1.6;
@@ -1425,10 +1442,15 @@
 
   function renderIntro() {
     var root = el("div", { id: "screen-intro" });
+    root.appendChild(el("div", { class: "audience-label", text: "部下を持つ管理職の方へ" }));
     root.appendChild(el("h1", { text: "AIに渡せる仕事、渡せない仕事" }));
     root.appendChild(el("p", {
       class: "lead",
       text: "いくつかの質問に答えると、あなたの業務のうち「AIに任せていい工程」と「自分でやるべき工程」の線引きと、明日から使えるプロンプトが手に入ります。"
+    }));
+    root.appendChild(el("p", {
+      class: "pain-point",
+      text: "AIに一度任せてみたけれど、返ってきたものが使えなかった――そういう経験がある方こそ、どこで線を引けばよかったのかが見えます。"
     }));
     root.appendChild(el("div", { class: "meta", text: "所要時間の目安：3分以内／すべて選択式（タップのみ）" }));
     var startBtn = el("button", { type: "button", class: "btn-primary full", text: "はじめる" });
